@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Federated Learning Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Federated Learning Convergence</h1>
+    <div id="loss_plot"></div>
+    <div id="accuracy_plot"></div>
+    <script>
+        var metrics = {{ metrics|safe }};
+        var rounds = metrics.map(m => m.round);
+        var loss = metrics.map(m => m.loss);
+        var accuracy = metrics.map(m => m.accuracy);
+        
+        Plotly.newPlot('loss_plot', [{
+            x: rounds,
+            y: loss,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Loss'
+        }], {
+            title: 'Loss Over Rounds',
+            xaxis: {title: 'Round'},
+            yaxis: {title: 'Loss'}
+        });
+        
+        Plotly.newPlot('accuracy_plot', [{
+            x: rounds,
+            y: accuracy,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Accuracy'
+        }], {
+            title: 'Accuracy Over Rounds',
+            xaxis: {title: 'Round'},
+            yaxis: {title: 'Accuracy'}
+        });
+    </script>
+</body>
+</html>
