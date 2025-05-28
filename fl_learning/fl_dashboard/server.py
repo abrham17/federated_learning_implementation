@@ -1,70 +1,25 @@
-"""
-import tensorflow as tf
-import tensorflow_federated as tff
 import numpy as np
-
-def create_tff_model(train_data):
-    keras_model = tf.keras.Sequential([
-        tf.keras.layers.Dense(128, activation='relu', input_shape=(784,)),
-        tf.keras.layers.Dense(10, activation='softmax')
-    ])
-    return tff.learning.models.from_keras_model(
-        keras_model,
-        #input_spec=(tf.TensorSpec((None, 784), tf.float32), tf.TensorSpec((None,), tf.int32)),
-        input_spec = train_data
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
-    )
-
-def get_fl_process(strategy='fedavg', mu=0.1):
-    if strategy == 'fedavg':
-        return tff.learning.algorithms.build_weighted_fed_avg(
-            create_tff_model,
-            client_optimizer_fn=lambda: tf.keras.optimizers.SGD(0.1),
-            server_optimizer_fn=lambda: tf.keras.optimizers.SGD(1.0)
-        )
-    elif strategy == 'fedprox':
-        return tff.learning.algorithms.build_weighted_fed_avg(
-            create_tff_model,
-            client_optimizer_fn=lambda: tf.keras.optimizers.SGD(0.1),
-            server_optimizer_fn=lambda: tf.keras.optimizers.SGD(1.0)
-        )
-    else:
-        raise ValueError("Unsupported strategy")
-
 def secure_aggregate(weights_list, num_clients, noise_std=0.01):
-    aggregated_weights = tff.learning.algorithms.build_fed_avg(
-        model_fn=create_tff_model(),
-        client_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=0.02),
-        server_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=1.0)
-    )
-    return aggregated_weights
-
-class Server:
+    """Secure aggregation with differential privacy"""
+    if not weights_list:
+        return None
     
+    # Clip updates to bound sensitivity
+    clipped_weights = []
+    for weights in weights_list:
+        clipped = [np.clip(w, -1.0, 1.0) for w in weights]
+        clipped_weights.append(clipped)
     
+    # Average weights
+    avg_weights = [np.zeros_like(w) for w in clipped_weights[0]]
+    for client_weights in clipped_weights:
+        for i, w in enumerate(client_weights):
+            avg_weights[i] += w / len(clipped_weights)
     
+    # Add Gaussian noise for differential privacy
+    noisy_weights = []
+    for w in avg_weights:
+        noise = np.random.normal(0, noise_std, w.shape)
+        noisy_weights.append(w + noise)
     
-    
-    
-
-    
-    def __init__(self, num_clients, strategy='fedavg'):
-        self.num_clients = num_clients
-        self.process = get_fl_process(strategy)
-        self.state = self.process.initialize()
-        self.global_weights = None
-
-    def run_round(self, client_datasets, selected_clients):
-        weights_list = []
-        for client_id in selected_clients:
-            try:
-                #client = Client(client_id, client_datasets[client_id], is_straggler=(client_id == 0), is_adversarial=(client_id == 1))
-                weights, _, _ = client.train(self.global_weights)
-                weights_list.append(weights)
-            except Exception as e:
-                print(f"Client {client_id} failed: {e}")
-        if weights_list:
-            self.global_weights = secure_aggregate(weights_list, len(selected_clients))
-        return self.global_weights
-"""
+    return noisy_weights

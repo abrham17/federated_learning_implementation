@@ -2,40 +2,153 @@
 <html>
 <head>
     <title>Federated Learning Dashboard</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .dashboard-container { display: flex; flex-wrap: wrap; }
+        .chart-container { width: 45%; margin: 10px; }
+        .card { background: #f8f9fa; border-radius: 8px; padding: 15px; margin: 10px; }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-running { background: #d4edda; color: #155724; }
+        .status-completed { background: #cce5ff; color: #004085; }
+        .status-adversarial { background: #f8d7da; color: #721c24; }
+        .status-dropped { background: #fff3cd; color: #856404; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+    </style>
 </head>
 <body>
-    <h1>Federated Learning Convergence</h1>
-    <div id="loss_plot"></div>
-    <div id="accuracy_plot"></div>
+    <h1>Federated Learning Dashboard</h1>
+    
+    {% if experiment %}
+    <div class="card">
+        <h2>Experiment: {{ experiment.name }}</h2>
+        <p>Status: <span>{{ experiment.status }}</span></p>
+        <p>Rounds: {{ experiment.rounds }} ({{ rounds|length }} completed)</p>
+        <p>Adversarial Activities Detected: {{ adversarial_count }}</p>
+    </div>
+    
+    <div class="dashboard-container">
+        <div class="chart-container card">
+            <h3>Model Accuracy</h3>
+            <canvas id="accuracyChart"></canvas>
+        </div>
+        
+        <div class="chart-container card">
+            <h3>Model Loss</h3>
+            <canvas id="lossChart"></canvas>
+        </div>
+        
+        <div class="chart-container card">
+            <h3>Client Participation</h3>
+            <canvas id="participationChart"></canvas>
+        </div>
+        
+        <div class="card" style="width: 95%;">
+            <h3>Client Activity Logs</h3>
+            {% if client_logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Round</th>
+                        <th>Client ID</th>
+                        <th>Status</th>
+                        <th>Accuracy</th>
+                        <th>Loss</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in client_logs %}
+                    <tr>
+                        <td>{{ log.round_number }}</td>
+                        <td>{{ log.client_id }}</td>
+                        <td>
+                            <span class="status-badge">
+                                {{ log.status }}
+                                {% if log.is_adversarial %} (A){% endif %}
+                                {% if log.is_straggler %} (S){% endif %}
+                            </span>
+                        </td>
+                        <td>{{ log.accuracy|floatformat:4 }}</td>
+                        <td>{{ log.loss|floatformat:4 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No client activity logs available.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>No experiment data available. Start a simulation first.</p>
+    {% endif %}
+    
+    <button onclick="location.href='/start/'">Start New Simulation</button>
+    
     <script>
-        var metrics = {{ metrics|safe }};
-        var rounds = metrics.map(m => m.round);
-        var loss = metrics.map(m => m.loss);
-        var accuracy = metrics.map(m => m.accuracy);
+        // Prepare chart data with fallback
+        const rounds = rounds;
+        const accuracies = accuracies;
+        const losses = losses;
+        const participants = participants;
         
-        Plotly.newPlot('loss_plot', [{
-            x: rounds,
-            y: loss,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Loss'
-        }], {
-            title: 'Loss Over Rounds',
-            xaxis: {title: 'Round'},
-            yaxis: {title: 'Loss'}
+        // Accuracy Chart
+        new Chart(document.getElementById('accuracyChart'), {
+            type: 'line',
+            data: {
+                labels: rounds.length ? rounds : ['No Data'],
+                datasets: [{
+                    label: 'Test Accuracy',
+                    data: accuracies.length ? accuracies : [0],
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    fill: true
+                }]
+            },
+            options: {
+                scales: { y: { min: 0, max: 1 } }
+            }
         });
         
-        Plotly.newPlot('accuracy_plot', [{
-            x: rounds,
-            y: accuracy,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Accuracy'
-        }], {
-            title: 'Accuracy Over Rounds',
-            xaxis: {title: 'Round'},
-            yaxis: {title: 'Accuracy'}
+        // Loss Chart
+        new Chart(document.getElementById('lossChart'), {
+            type: 'line',
+            data: {
+                labels: rounds.length ? rounds : ['No Data'],
+                datasets: [{
+                    label: 'Test Loss',
+                    data: losses.length ? losses : [0],
+                    borderColor: '#e74a3b',
+                    backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                    fill: true
+                }]
+            }
         });
+        
+        // Participation Chart
+        new Chart(document.getElementById('participationChart'), {
+            type: 'bar',
+            data: {
+                labels: rounds.length ? rounds : ['No Data'],
+                datasets: [{
+                    label: 'Active Clients',
+                    data: participants.length ? participants : [0],
+                    backgroundColor: '#36b9cc'
+                }]
+            },
+            options: {
+                scales: { y: { min: 0 } }
+            }
+        });
+        
+        // Auto-refresh if experiment is running
+        
     </script>
 </body>
+</html>
