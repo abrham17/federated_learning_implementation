@@ -36,28 +36,29 @@ run the server
 
 
 **folder structure**
+
 fl_learning/                     
-├── fl_dashboard/                 
-│   ├── migrations/               
-│   ├── templates/               
-│   │   └── dashboard.html
-│   ├── __init__.py
-│   ├── admin.py                  
-│   ├── apps.py                   
-│   ├── client.py                 
-│   ├── data_partition.py         
-│   ├── models.py                 
-│   ├── run_simulation.py        
-│   ├── server.py                 
-│   ├── tests.py                  
-│   ├── urls.py                   
-│   └── views.py                  
-│
-├── fl_learning/                
-│   ├── __init__.py
-│   ├── settings.py              
-│   ├── urls.py                   
-│   ├── asgi.py                   
-│   └── wsgi.py                   
-│
-├── manage.py                     
+    ├── fl_dashboard/                 
+    │     ├── migrations/               
+    │     ├── templates/               
+    │     │   └── dashboard.html
+    │     ├── __init__.py
+    │     ├── admin.py                  
+    │     ├── apps.py                   
+    │     ├── client.py                 
+    │     ├── data_partition.py         
+    │     ├── models.py                 
+    │     ├── run_simulation.py        
+    │     ├── server.py                 
+    │     ├── tests.py                  
+    │     ├── urls.py                   
+    │     └── views.py                  
+    │
+    ├── fl_learning/                
+    │     ├── __init__.py
+    │     ├── settings.py              
+    │     ├── urls.py                   
+    │     ├── asgi.py                   
+    │     └── wsgi.py                   
+    │
+    ├── manage.py                     
