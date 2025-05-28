@@ -1,6 +1,6 @@
-        ﻿# federated_learning_implementation using mnist dataset
+**federated_learning_implementation using mnist dataset**
 
-  setup
+**setup**
 
 clone the respositery
   
@@ -33,3 +33,6 @@ migrate models
 run the server
 
       python manage.py runserver    
+
+
+**folder structure**
