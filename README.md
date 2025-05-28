@@ -38,11 +38,11 @@ run the server
 **folder structure**
 
 fl_learning/                     
-    ├── fl_dashboard/                 
+    ├── fl_dashboard/  
     │     ├── migrations/               
     │     ├── templates/               
     │     │   └── dashboard.html
-    │     ├── __init__.py
+    │     ├──__init__.py
     │     ├── admin.py                  
     │     ├── apps.py                   
     │     ├── client.py                 
@@ -53,10 +53,9 @@ fl_learning/
     │     ├── tests.py                  
     │     ├── urls.py                   
     │     └── views.py                  
-    │
     ├── fl_learning/                
-    │     ├── __init__.py
-    │     ├── settings.py              
+    │     ├──__init__.py
+    │     ├──settings.py              
     │     ├── urls.py                   
     │     ├── asgi.py                   
     │     └── wsgi.py                   
