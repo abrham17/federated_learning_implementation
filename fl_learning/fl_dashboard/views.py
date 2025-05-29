@@ -44,8 +44,8 @@ def dashboard(request):
     
     # Prepare chart data
     rounds = [log.round_number for log in round_logs]
-    accuracies = [log.accuracy for log in round_logs]
-    losses = [log.loss for log in round_logs]
+    test_accuracies = [log.accuracy for log in round_logs]
+    test_losses = [log.loss for log in round_logs]
     participants = [log.clients_participated for log in round_logs]
     
     # Prepare client activity data
@@ -54,15 +54,18 @@ def dashboard(request):
         log for log in client_logs if log.is_adversarial and log.status == 'adversarial'
     ]
     
+    # Get all experiments for selector
+    all_experiments = Experiment.objects.all()
+    
     return render(request, 'dashboard.html', {
         'experiment': experiment,
+        'all_experiments': all_experiments,
         'rounds': rounds,
-        'accuracies': accuracies,
-        'losses': losses,
+        'test_accuracies': test_accuracies,
+        'test_losses': test_losses,
         'participants': participants,
         'adversarial_count': len(adversarial_activity),
         'client_logs': client_logs[:20]  # Show recent 20 logs
     })
-
 def get_metrics(request):
     return JsonResponse({'metrics': metrics})
