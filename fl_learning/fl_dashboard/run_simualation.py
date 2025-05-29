@@ -12,22 +12,18 @@ from .models import Experiment, RoundLog, ClientLog
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 logging.basicConfig(filename='fl_simulation.log', level=logging.INFO)
 NUM_CLIENTS = 10
-ROUNDS = 50
-PARTICIPATION_RATE = 0.7
+ROUNDS = 10
+PARTICIPATION_RATE = 0.8
 
 def run_simulation():
     global client_datasets, metrics, current_experiment
-    
-    # Create non-IID data
     client_datasets, class_distributions = create_non_iid_data(NUM_CLIENTS)
-    
-    # Initialize clients with different behaviors
     clients = [
         Client(
             client_id=i,
             dataset=client_datasets[i],
-            is_straggler=(i == 0),  # First client is straggler
-            is_adversarial=(i == 1)  # Second client is adversarial
+            is_straggler=(i == 0),  
+            is_adversarial=(i == 1) 
         )
         for i in range(NUM_CLIENTS)
     ]
@@ -46,11 +42,9 @@ def run_simulation():
     
     metrics = []
     for round_num in range(ROUNDS):
-        # Select participating clients
         selected_indices = random.sample(range(NUM_CLIENTS), int(PARTICIPATION_RATE * NUM_CLIENTS))
         selected_clients = [clients[i] for i in selected_indices]
         
-        # Train clients in parallel
         threads = []
         results = [None] * len(selected_clients)
         for idx, client in enumerate(selected_clients):
@@ -61,19 +55,16 @@ def run_simulation():
             threads.append(thread)
             thread.start()
         
-        # Wait with timeout for stragglers
         for thread in threads:
             thread.join(timeout=15.0)
         
-        # Collect successful updates
         updates = []
         client_logs = []
         for i, result in enumerate(results):
-            if result and result[0] is not None:  # Valid update
+            if result and result[0] is not None:  
                 weights, loss, accuracy, status = result
                 updates.append(weights)
                 
-                # Log client activity
                 client_log = ClientLog(
                     experiment=experiment,
                     client_id=selected_clients[i].client_id,
@@ -87,7 +78,6 @@ def run_simulation():
                 client_log.save()
                 client_logs.append(client_log)
         
-        # Aggregate updates with secure aggregation
         if updates:
             new_weights = secure_aggregate(updates, len(selected_clients))
             if new_weights:
@@ -129,11 +119,19 @@ def train_client(client, global_weights, round_num, results, idx):
         logging.error(f"Client {client.client_id} failed: {str(e)}")
         results[idx] = (None, None, None, "failed")
 
+# simulation.py (evaluate_global_model function)
 def evaluate_global_model(model):
     """Evaluate global model on test data"""
     _, test_data = tff.simulation.datasets.emnist.load_data()
     test_dataset = test_data.create_tf_dataset_from_all_clients()
-    test_dataset = test_dataset.map(lambda e: (tf.reshape(e['pixels'], [-1]), e['label']))
+    
+    # Preprocess images to match model input requirements
+    def preprocess(element):
+        # Reshape to (28, 28, 1) without adding extra dimension
+        return (tf.reshape(element['pixels'], (28, 28, 1)), element['label'])
+    
+    test_dataset = test_dataset.map(preprocess)
     test_dataset = test_dataset.batch(32)
+    
     loss, acc = model.evaluate(test_dataset, verbose=0)
     return loss, acc
