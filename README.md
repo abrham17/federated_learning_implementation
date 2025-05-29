@@ -34,6 +34,10 @@ run the server
 
       python manage.py runserver    
 
+the server runs at http://127.0.0.1:8000/
+after installing and running the server. the home that appears shows the loss and accuracy of the round(as a graph) and clients (as a table). If need one can click the button start new simulation inorder to run the the whole process and after finishing the result is found at http://127.0.0.1:8000/dashboard.
+
+
 
 **folder structure**
 
